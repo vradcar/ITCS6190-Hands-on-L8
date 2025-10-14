@@ -37,16 +37,17 @@ agg_df = parsed_stream.groupBy("driver_id").agg(
     avg("distance_km").alias("avg_distance")
 )
 
-# Write the aggregation results to CSV files in real time
+# Write each micro-batch to a separate CSV file using foreachBatch
+def write_to_csv(batch_df, batch_id):
+    batch_df.coalesce(1).write.mode("overwrite").option("header", "true").csv(f"outputs/task_2/batch_{batch_id}")
+
 query = agg_df.writeStream \
     .outputMode("complete") \
-    .format("csv") \
-    .option("path", "outputs/task_2") \
+    .foreachBatch(write_to_csv) \
     .option("checkpointLocation", "outputs/task_2/_checkpoint/") \
-    .option("header", "true") \
     .start()
 
-print("Task 2: Real-time aggregations started. Writing to outputs/task_2/")
+print("Task 2: Real-time aggregations started. Writing to outputs/task_2/ (one folder per batch)")
 print("Press Ctrl+C to stop...")
 
 query.awaitTermination()
