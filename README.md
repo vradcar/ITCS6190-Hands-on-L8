@@ -1,4 +1,89 @@
 # Ride Sharing Analytics Using Spark Streaming and Spark SQL.
+
+## Project Report & Results Summary
+
+### Overview
+This project implements a real-time analytics pipeline for a ride-sharing platform using Apache Spark Structured Streaming. The pipeline ingests simulated ride data, performs real-time aggregations, and analyzes trends over time. All tasks were successfully executed, and outputs were generated as required.
+
+---
+
+## Explanations, Approach, and Results
+
+### Data Generator
+**Approach:**
+- The `data_generator.py` script simulates real-time ride-sharing data and streams it to a socket on `localhost:9999`.
+- The data includes fields: `trip_id`, `driver_id`, `distance_km`, `fare_amount`, and `timestamp`.
+
+---
+
+### Task 1: Ingestion and Parsing
+**Explanation & Approach:**
+- Used Spark Structured Streaming to read data from the socket.
+- Parsed incoming JSON messages into a DataFrame with the correct schema.
+- Wrote each micro-batch as a CSV file in `outputs/task_1/`.
+
+**Results:**
+- Each CSV contains raw ride events with all columns present.
+- Multiple files confirm successful streaming and batch processing.
+
+---
+
+### Task 2: Real-Time Aggregations
+**Explanation & Approach:**
+- Reused the parsed DataFrame from Task 1.
+- Grouped by `driver_id` to compute total fare and average distance in real time.
+- Used `foreachBatch` to write each batch as a CSV in `outputs/task_2/` (due to Spark CSV sink limitations).
+
+**Results:**
+- Each batch folder contains a CSV with `driver_id`, `total_fare`, and `avg_distance`.
+- Shows real-time aggregation per driver, updating as new data arrives.
+
+---
+
+### Task 3: Windowed Time-Based Analytics
+**Explanation & Approach:**
+- Converted the timestamp column to a proper TimestampType and added a watermark.
+- Used Spark’s window function to perform a 5-minute windowed aggregation (sliding by 1 minute) on `fare_amount`.
+- Wrote results to CSV files in `outputs/task_3/`.
+
+**Results:**
+- Each CSV contains windowed aggregations with `window_start`, `window_end`, and `total_fare`.
+- Results reflect total fare trends over rolling 5-minute windows.
+
+---
+
+### Output Analysis
+- **Task 1:**
+  - Each CSV in `outputs/task_1/` contains raw, parsed ride events with columns: `trip_id`, `driver_id`, `distance_km`, `fare_amount`, `timestamp`.
+  - Multiple files indicate successful streaming ingestion and batch processing.
+- **Task 2:**
+  - Each batch folder in `outputs/task_2/` contains a CSV with columns: `driver_id`, `total_fare`, `avg_distance`.
+  - Shows real-time aggregation per driver, updating as new data arrives.
+- **Task 3:**
+  - Each CSV in `outputs/task_3/` contains windowed aggregations with columns: `window_start`, `window_end`, `total_fare`.
+  - Results reflect total fare trends over rolling 5-minute windows.
+
+### Notes
+- All output files are included for transparency and reproducibility.
+- Checkpoint folders are omitted from the repository as instructed.
+- The project structure and code follow the assignment requirements and best practices for Spark Structured Streaming.
+
+----
+
+## Problems Faced During Execution
+
+- **CSV Sink Output Modes:**
+  - Spark Structured Streaming does not support `complete` or `update` output modes for the CSV sink. This required switching to the `foreachBatch` method in Task 2 to write each micro-batch to a separate CSV file.
+
+- **Streaming Environment Warnings:**
+  - Several warnings appeared regarding the use of the socket source, Spark UI port binding, and native Hadoop libraries. These are expected in a development environment and did not affect functionality.
+
+- **Windowed Output Delays:**
+  - In Task 3, windowed aggregations only produce output after enough data and time have passed, resulting in fewer or delayed output files compared to Tasks 1 and 2.
+
+- **Checkpoints and Output Management:**
+  - Care was taken to exclude checkpoint folders from the repository, as they are not needed for reproducibility and can clutter the submission.
+
 ---
 ## **Prerequisites**
 Before starting the assignment, ensure you have the following software installed and properly configured on your machine:
